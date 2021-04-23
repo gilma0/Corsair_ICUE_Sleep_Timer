@@ -16,6 +16,7 @@ def get_available_leds():
 
 
 def turnOnLeds(all_leds):
+    print("turn on")
     cnt = len(all_leds)
     for di in range(cnt):
         device_leds = all_leds[di]
@@ -25,6 +26,7 @@ def turnOnLeds(all_leds):
     sdk.set_led_colors_flush_buffer()
 
 def turnOffLeds(all_leds):
+    print("turn off")
     cnt = len(all_leds)
     for di in range(cnt):
         device_leds = all_leds[di]
@@ -37,8 +39,8 @@ def keyPress():
     global timer
     while True:
         if keyboard.read_key():
-            print("A Key Has Been Pressed, Lights Up!")
             timer = 0
+            #print("A Key Has Been Pressed, Lights Up!")
         time.sleep(0.1)
 
 def main(secs):
@@ -46,6 +48,8 @@ def main(secs):
     global timer
     sdk = CueSdk()
     connected = sdk.connect()
+    print(sdk.protocol_details)
+    print(sdk.get_devices())
     if not connected:
         err = sdk.get_last_error()
         print("Handshake failed: %s" % err)
@@ -57,17 +61,17 @@ def main(secs):
         return
 
     print("Looking for key press...")
-    turnOffLeds(colors)
+    turnOnLeds(colors)
     keyboardEventThread = threading.Thread(target=keyPress)
     keyboardEventThread.start()
     while True:
         #print("timer: " + str(timer))
         if timer > secs:
             turnOffLeds(colors)
-        else:
+            keyboard.read_key() #stops wasted cycles and useless updates to keyboard
             turnOnLeds(colors)
         timer += 0.1
         time.sleep(0.1)
 
 if __name__ == "__main__":
-    main(300)
+    main(1)
