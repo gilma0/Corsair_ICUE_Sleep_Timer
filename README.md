@@ -1,6 +1,6 @@
 # Corsair-Keyboard-Leds-Sleep-Timer
 
-Simple sleep timer for Corsair keyboards leds since there is no option to do so in ICUE software
+Simple sleep timer for Corsair keyboards since there is no option to do so in ICUE software
 
 made specifically for non rgb models
 
