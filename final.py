@@ -16,7 +16,7 @@ def get_available_leds():
 
 
 def turnOnLeds(all_leds):
-    print("turn on")
+    #print("turn on")
     cnt = len(all_leds)
     for di in range(cnt):
         device_leds = all_leds[di]
@@ -26,7 +26,7 @@ def turnOnLeds(all_leds):
     sdk.set_led_colors_flush_buffer()
 
 def turnOffLeds(all_leds):
-    print("turn off")
+    #print("turn off")
     cnt = len(all_leds)
     for di in range(cnt):
         device_leds = all_leds[di]
@@ -38,9 +38,10 @@ def turnOffLeds(all_leds):
 def keyPress():
     global timer
     while True:
-        if keyboard.read_key():
-            timer = 0
-            #print("A Key Has Been Pressed, Lights Up!")
+        #if keyboard.read_key():
+        keyboard.read_key() #stops wasting cpu cycles
+        timer = 0
+        #print("A Key Has Been Pressed, Lights Up!")
         time.sleep(0.1)
 
 def main(secs):
@@ -74,4 +75,4 @@ def main(secs):
         time.sleep(0.1)
 
 if __name__ == "__main__":
-    main(1)
+    main(1) #change to how many seconds until leds shuts off
