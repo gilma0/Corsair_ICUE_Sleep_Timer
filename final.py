@@ -1,5 +1,5 @@
 import threading
-
+from pynput.mouse import Controller
 from cuesdk import CueSdk
 import time
 import keyboard
@@ -35,6 +35,18 @@ def turnOffLeds(all_leds):
         sdk.set_led_colors_buffer_by_device_index(di, device_leds)
     sdk.set_led_colors_flush_buffer()
 
+def mouseMove(secs):
+    global timer
+    mouse = Controller()
+    before = mouse.position
+    while True:
+        current = mouse.position
+        if before != current:
+            timer = 0
+            #print('Movement detected')
+        before = current
+        time.sleep(secs-0.1) #detect only before timer completion to prevent cpu cycles waste
+
 def keyPress():
     global timer
     while True:
@@ -62,7 +74,10 @@ def main(secs):
         return
 
     print("Looking for key press...")
+
     turnOnLeds(colors)
+    mouseMovementEventThread = threading.Thread(target=mouseMove, args=(secs,))
+    mouseMovementEventThread.start()
     keyboardEventThread = threading.Thread(target=keyPress)
     keyboardEventThread.start()
     while True:
@@ -75,4 +90,4 @@ def main(secs):
         time.sleep(0.1)
 
 if __name__ == "__main__":
-    main(1) #change to how many seconds until leds shuts off
+    main(300) #change to how many seconds until leds shuts off
