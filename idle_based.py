@@ -1,6 +1,5 @@
 from ctypes import Structure, windll, c_uint, sizeof, byref
 from cuesdk import CueSdk
-import keyboard
 import time
 
 class LASTINPUTINFO(Structure):
@@ -67,7 +66,7 @@ def main(secs):
         idle = get_idle_duration()
         #print(idle)
         if idle > secs:
-            #checking current led color to stop keyboard spamming
+            #checking current led color to prevent keyboard spamming
             if colors[0][14] == (255, 0, 0):
                 turnOffLeds(colors)
         elif colors[0][14] == (0, 0, 0):
@@ -76,4 +75,4 @@ def main(secs):
 
 
 if __name__ == "__main__":
-    main(1) #change to how many seconds until leds shuts off
+    main(300) #change to how many seconds until leds shuts off
