@@ -67,9 +67,11 @@ def main(secs):
         idle = get_idle_duration()
         #print(idle)
         if idle > secs:
-            turnOffLeds(colors)
-            keyboard.read_key()
-            turnOnLeds(colors)
+            #checking current led color to stop keyboard spamming
+            if colors[0][14] == (255, 0, 0):
+                turnOffLeds(colors)
+        elif colors[0][14] == (0, 0, 0):
+                turnOnLeds(colors)
         time.sleep(0.1)
 
 
