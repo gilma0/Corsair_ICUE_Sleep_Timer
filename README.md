@@ -2,7 +2,7 @@
 
 A simple sleep timer for Corsair keyboards since there is no option to do so in ICUE software
 
-Made for corsair K70, should work on other Corsair keyboards but may require minor changes
+Tested on Corsair K70 keyboard, should work on other Corsair keyboards but may require minor changes
 
 input_based: Detects key presses and mouse movements, issue with detecting inputs in some apps
 
