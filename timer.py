@@ -1,3 +1,4 @@
+#Created by Gil Matsliah a.k.a gilma0
 from ctypes import Structure, windll, c_uint, sizeof, byref
 from cuesdk import CueSdk
 import threading
