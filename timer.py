@@ -1,4 +1,3 @@
-#Created by Gil Matsliah a.k.a gilma0
 from ctypes import Structure, windll, c_uint, sizeof, byref
 from cuesdk import CueSdk
 import threading
@@ -12,9 +11,14 @@ class LASTINPUTINFO(Structure):
     ]
 
 flag = True
+timer = threading.Thread()
 
 def start_click():
     global button_text
+    global timer
+    if timer.is_alive():
+        print("Process is still running, press stop first")
+        return
     entered_minutes = float(textEntry.get())*60
     timer = threading.Thread(target=main, args=(entered_minutes, ))
     timer.start()
@@ -22,6 +26,10 @@ def start_click():
 def stop_click():
     global flag
     global button_text
+    global timer
+    if not timer.is_alive():
+        print("Nothing to stop")
+        return
     flag = False
     button_text = "Start"
 
@@ -90,7 +98,7 @@ def main(secs):
         elif colors[0][14] == (0, 0, 0):
                 turnOnLeds(colors)
         time.sleep(0.1)
-    print("stopped by click")
+    print("Timer stopped")
     flag = True
 
 
