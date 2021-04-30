@@ -4,6 +4,6 @@ A simple sleep timer for Corsair keyboards since there is no option to do so in 
 
 Tested on non RGB Corsair K70 keyboard, should work on other Corsair keyboards but may require minor changes
 
-![alt text](https://i.imgur.com/PoDi8xc.png?1)
+![alt text](https://i.imgur.com/pxQukGc.png?1)
 
 Requirments: Corsair ICUE software
