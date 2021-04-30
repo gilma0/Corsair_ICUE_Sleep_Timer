@@ -8,7 +8,7 @@ input_based (alpha version): Detects key presses and mouse movements, issues wit
 
 idle_based: Uses ctype to measure idle time, works everywhere (as far as i know), simpler and works better
 
-![alt text](https://imgur.com/PoDi8xc)
+![alt text](https://i.imgur.com/PoDi8xc.png)
 
 Made specifically for non rgb models
 
