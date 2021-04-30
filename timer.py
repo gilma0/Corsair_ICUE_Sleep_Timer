@@ -17,7 +17,7 @@ def start_click():
     global button_text
     global timer
     if timer.is_alive():
-        print("Process is still running, press stop first")
+        print("Timer already running, press stop first")
         return
     entered_minutes = float(textEntry.get())*60
     timer = threading.Thread(target=main, args=(entered_minutes, ))
