@@ -12,26 +12,31 @@ class LASTINPUTINFO(Structure):
 
 flag = True
 timer = threading.Thread()
+status = None
 
 def start_click():
     global button_text
     global timer
+    global status
     if timer.is_alive():
         print("Timer already running, press stop first")
         return
     entered_minutes = float(textEntry.get())*60
     timer = threading.Thread(target=main, args=(entered_minutes, ))
     timer.start()
+    status.set("Status: On\n")
 
 def stop_click():
     global flag
     global button_text
     global timer
+    global status
     if not timer.is_alive():
         print("Nothing to stop")
         return
     flag = False
     button_text = "Start"
+    status.set("Status: Off\n")
 
 def get_idle_duration():
     lastInputInfo = LASTINPUTINFO()
@@ -72,6 +77,7 @@ def turnOffLeds(all_leds):
 def main(secs):
     global sdk
     global flag
+    global status
     sdk = CueSdk()
     connected = sdk.connect()
     print(sdk.protocol_details)
@@ -79,18 +85,22 @@ def main(secs):
     if not connected:
         err = sdk.get_last_error()
         print("Handshake failed: %s" % err)
+        status.set("Status: Error\n")
         return
 
     colors = get_available_leds()
     if not colors:
         print("Leds not available")
+        status.set("Status: Error\n")
         return
     print("keyboard lights will shutdown after: " + str(secs/60) + " minutes")
     print("Checking idle")
     turnOnLeds(colors)
+    print("Timer Started")
     while True and flag == True:
         idle = get_idle_duration()
         #print(idle)
+        #print(status)
         if idle > secs:
             #checking current led color to prevent keyboard spamming
             if colors[0][14] == (255, 0, 0):
@@ -100,22 +110,25 @@ def main(secs):
         time.sleep(0.1)
     print("Timer stopped")
     flag = True
+    #print(status)
 
 
 if __name__ == "__main__":
     #main(300) #change to how many seconds until leds shuts off
     window = Tk()
+    status = StringVar()
+    status.set("Status: Off\n")
     window.title("Corsair Led Sleep Timer")
     window.configure(background="black")
-    Label(window, text="  ", bg="black").grid(row=0, column=0)
-    Label(window, text="  ", bg="black").grid(row=0, column=3)
     Label(window, text="\nCorsair Sleep Timer\nCreated by Gil Matsliah\n\nAlso Known as gilma0\n", bg="black", fg="white", font="none 18 bold").grid(row=0,column = 1, columnspan = 2, sticky=E)
     Label(window, text="Minutes to shut off:", bg="black", fg="white", font="none 12 bold").grid(row=1, column=1, sticky=W)
     textEntry = Entry(window, width=15, bg="white", text="5")
     textEntry.grid(row=1, column=2, sticky=W)
     textEntry.insert(END, "5")
     Label(window, text="", bg="black").grid(row=2)
-    Button(window, text="Start", width=5, command=start_click).grid(row=3, column=1, sticky=N)
-    Button(window, text="Stop", width=5, command=stop_click).grid(row=3, column=2, sticky=W)
-    Label(window, text="\n", bg="black").grid(row=4)
+    Label(window, textvariable=status, bg="black", fg="white", font ="none 12 bold").grid(row=3, column=1, columnspan=2)
+    #Label(window, text="", bg="black").grid(row=4, column=0)
+    Button(window, text="Start", width=5, command=start_click).grid(row=4, column=1, sticky=N)
+    Button(window, text="Stop", width=5, command=stop_click).grid(row=4, column=2, sticky=W)
+    Label(window, text="\n", bg="black").grid(row=5)
     window.mainloop()
