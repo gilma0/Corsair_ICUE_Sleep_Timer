@@ -1,12 +1,28 @@
 from ctypes import Structure, windll, c_uint, sizeof, byref
 from cuesdk import CueSdk
+import threading
 import time
+from tkinter import *
 
 class LASTINPUTINFO(Structure):
     _fields_ = [
         ('cbSize', c_uint),
         ('dwTime', c_uint),
     ]
+
+flag = True
+
+def start_click():
+    global button_text
+    entered_minutes = float(textEntry.get())*60
+    timer = threading.Thread(target=main, args=(entered_minutes, ))
+    timer.start()
+
+def stop_click():
+    global flag
+    global button_text
+    flag = False
+    button_text = "Start"
 
 def get_idle_duration():
     lastInputInfo = LASTINPUTINFO()
@@ -46,6 +62,7 @@ def turnOffLeds(all_leds):
 
 def main(secs):
     global sdk
+    global flag
     sdk = CueSdk()
     connected = sdk.connect()
     print(sdk.protocol_details)
@@ -59,10 +76,10 @@ def main(secs):
     if not colors:
         print("Leds not available")
         return
-
+    print("keyboard lights will shutdown after: " + str(secs/60) + " minutes")
     print("Checking idle")
     turnOnLeds(colors)
-    while True:
+    while True and flag == True:
         idle = get_idle_duration()
         #print(idle)
         if idle > secs:
@@ -72,7 +89,23 @@ def main(secs):
         elif colors[0][14] == (0, 0, 0):
                 turnOnLeds(colors)
         time.sleep(0.1)
+    print("stopped by click")
 
 
 if __name__ == "__main__":
-    main(300) #change to how many seconds until leds shuts off
+    #main(300) #change to how many seconds until leds shuts off
+    window = Tk()
+    window.title("Corsair Led Sleep Timer")
+    window.configure(background="black")
+    Label(window, text="  ", bg="black").grid(row=0, column=0)
+    Label(window, text="  ", bg="black").grid(row=0, column=3)
+    Label(window, text="\nCorsair Sleep Timer\nCreated by Gil Matsliah\n\nAlso Known as gilma0\n", bg="black", fg="white", font="none 18 bold").grid(row=0,column = 1, columnspan = 2, sticky=E)
+    Label(window, text="Minutes to shut off:", bg="black", fg="white", font="none 12 bold").grid(row=1, column=1, sticky=W)
+    textEntry = Entry(window, width=15, bg="white", text="5")
+    textEntry.grid(row=1, column=2, sticky=W)
+    textEntry.insert(END, "5")
+    Label(window, text="", bg="black").grid(row=2)
+    Button(window, text="Start", width=5, command=start_click).grid(row=3, column=1, sticky=N)
+    Button(window, text="Stop", width=5, command=stop_click).grid(row=3, column=2, sticky=W)
+    Label(window, text="\n", bg="black").grid(row=4)
+    window.mainloop()
