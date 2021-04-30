@@ -99,6 +99,10 @@ def main(secs):
     print("Timer Started")
     while True and flag == True:
         idle = get_idle_duration()
+        #if sdk.get_device_count() == 0:
+        if sdk.get_device_count() == -1:
+            flag = True
+            status.set("Status: Error\n")
         #print(idle)
         #print(status)
         if idle > secs:
