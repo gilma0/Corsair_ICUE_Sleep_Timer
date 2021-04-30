@@ -90,6 +90,7 @@ def main(secs):
                 turnOnLeds(colors)
         time.sleep(0.1)
     print("stopped by click")
+    flag = True
 
 
 if __name__ == "__main__":
