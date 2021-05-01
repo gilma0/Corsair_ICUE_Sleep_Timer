@@ -1,8 +1,10 @@
+import os
 from ctypes import Structure, windll, c_uint, sizeof, byref
-from cuesdk import CueSdk
+from cuesdk import CueSdk, CorsairLedId
 import threading
 import time
 from tkinter import *
+
 
 class LASTINPUTINFO(Structure):
     _fields_ = [
@@ -10,9 +12,11 @@ class LASTINPUTINFO(Structure):
         ('dwTime', c_uint),
     ]
 
+
 flag = True
 timer = threading.Thread()
 status = None
+
 
 def start_click():
     global button_text
@@ -21,10 +25,11 @@ def start_click():
     if timer.is_alive():
         print("Timer already running, press stop first")
         return
-    entered_minutes = float(textEntry.get())*60
-    timer = threading.Thread(target=main, args=(entered_minutes, ))
+    entered_minutes = float(textEntry.get()) * 60
+    timer = threading.Thread(target=main, args=(entered_minutes,))
     timer.start()
     status.set("Status: On\n")
+
 
 def stop_click():
     global flag
@@ -38,12 +43,14 @@ def stop_click():
     button_text = "Start"
     status.set("Status: Off\n")
 
+
 def get_idle_duration():
     lastInputInfo = LASTINPUTINFO()
     lastInputInfo.cbSize = sizeof(lastInputInfo)
     windll.user32.GetLastInputInfo(byref(lastInputInfo))
     millis = windll.kernel32.GetTickCount() - lastInputInfo.dwTime
     return millis / 1000.0
+
 
 def get_available_leds():
     leds = list()
@@ -54,7 +61,7 @@ def get_available_leds():
     return leds
 
 
-def turnOnLeds(all_leds):
+def turn_on_leds(all_leds):
     print("turn on")
     cnt = len(all_leds)
     for di in range(cnt):
@@ -64,7 +71,8 @@ def turnOnLeds(all_leds):
         sdk.set_led_colors_buffer_by_device_index(di, device_leds)
     sdk.set_led_colors_flush_buffer()
 
-def turnOffLeds(all_leds):
+
+def turn_off_leds(all_leds):
     print("turn off")
     cnt = len(all_leds)
     for di in range(cnt):
@@ -74,13 +82,13 @@ def turnOffLeds(all_leds):
         sdk.set_led_colors_buffer_by_device_index(di, device_leds)
     sdk.set_led_colors_flush_buffer()
 
+
 def main(secs):
     global sdk
     global flag
     global status
     sdk = CueSdk()
     connected = sdk.connect()
-    print(sdk.protocol_details)
     print(sdk.get_devices())
     if not connected:
         err = sdk.get_last_error()
@@ -93,44 +101,39 @@ def main(secs):
         print("Leds not available")
         status.set("Status: Error\n")
         return
-    print("keyboard lights will shutdown after: " + str(secs/60) + " minutes")
+    print("keyboard lights will shutdown after: " + str(secs / 60) + " minutes")
     print("Checking idle")
-    turnOnLeds(colors)
+    turn_on_leds(colors)
     print("Timer Started")
-    while True and flag == True:
+    while flag:
         idle = get_idle_duration()
-        #if sdk.get_device_count() == 0:
         if sdk.get_device_count() == -1:
             flag = True
             status.set("Status: Error\n")
-        #print(idle)
-        #print(status)
         if idle > secs:
-            #checking current led color to prevent keyboard spamming
-            if colors[0][14] == (255, 0, 0):
-                turnOffLeds(colors)
-        elif colors[0][14] == (0, 0, 0):
-                turnOnLeds(colors)
+            # checking current led color to prevent keyboard spamming
+            if colors[0][CorsairLedId.K_F] == (255, 0, 0):
+                turn_off_leds(colors)
+        elif colors[0][CorsairLedId.K_F] == (0, 0, 0):
+            turn_on_leds(colors)
         time.sleep(0.1)
     print("Timer stopped")
     flag = True
-    #print(status)
 
 
 if __name__ == "__main__":
-    #main(300) #change to how many seconds until leds shuts off
     window = Tk()
     status = StringVar()
     status.set("Status: Off\n")
     window.title("Corsair Led Sleep Timer")
     window.configure(background="grey18")
-    Label(window, text="\nCorsair Sleep Timer\nCreated by Gil Matsliah\n\nAlso Known as gilma0\n", bg="gray18", fg="white", font="none 18 bold").grid(row=0,column = 1, columnspan = 2, sticky=E)
+    Label(window, text="\nCorsair Sleep Timer\nCreated by Gil Matsliah\n\nAlso Known as gilma0\n", bg="gray18", fg="white", font="none 18 bold").grid(row=0, column=1, columnspan=2, sticky=E)
     Label(window, text="Minutes to shut off:", bg="gray18", fg="white", font="none 12 bold").grid(row=1, column=1, sticky=W)
     textEntry = Entry(window, width=15, bg="white")
     textEntry.grid(row=1, column=2, sticky=W)
     textEntry.insert(END, "5")
     Label(window, text="", bg="gray18").grid(row=2, column=4)
-    Label(window, textvariable=status, bg="gray18", fg="white", font ="none 12 bold").grid(row=3, column=1, columnspan=2)
+    Label(window, textvariable=status, bg="gray18", fg="white", font="none 12 bold").grid(row=3, column=1, columnspan=2)
     #Label(window, text="", bg="gray18").grid(row=4, column=0)
     #Button(window, text="Start", width=5, command=start_click).grid(row=4, column=1, sticky=N)
     startButton = PhotoImage(file='buttons/start_img.png')
