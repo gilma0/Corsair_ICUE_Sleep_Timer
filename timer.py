@@ -1,4 +1,3 @@
-import os
 from ctypes import Structure, windll, c_uint, sizeof, byref
 from cuesdk import CueSdk, CorsairLedId
 import threading
@@ -19,11 +18,13 @@ status = None
 
 
 def start_click():
-    global button_text
     global timer
     global status
     if timer.is_alive():
-        print("Timer already running, press stop first")
+        print("Timer was already running, restarting!")
+        stop_click()
+        time.sleep(0.2)
+        start_click()
         return
     entered_minutes = float(textEntry.get()) * 60
     timer = threading.Thread(target=main, args=(entered_minutes,))
@@ -33,14 +34,12 @@ def start_click():
 
 def stop_click():
     global flag
-    global button_text
     global timer
     global status
     if not timer.is_alive():
         print("Nothing to stop")
         return
     flag = False
-    button_text = "Start"
     status.set("Status: Off\n")
 
 
@@ -134,12 +133,15 @@ if __name__ == "__main__":
     textEntry.insert(END, "5")
     Label(window, text="", bg="gray18").grid(row=2, column=4)
     Label(window, textvariable=status, bg="gray18", fg="white", font="none 12 bold").grid(row=3, column=1, columnspan=2)
-    #Label(window, text="", bg="gray18").grid(row=4, column=0)
-    #Button(window, text="Start", width=5, command=start_click).grid(row=4, column=1, sticky=N)
-    startButton = PhotoImage(file='buttons/start_img.png')
-    stopButton = PhotoImage(file='buttons/stop_img.png')
-    Button(window, image=startButton, bg="gray18", border=0, activebackground="gray18", command=start_click).grid(row=4, column=1, sticky=N)
-    #Button(window, text="Stop", width=5, command=stop_click).grid(row=4, column=2, sticky=W)
-    Button(window, image=stopButton, bg="gray18", border=0, activebackground="gray18", command=stop_click).grid(row=4, column=2, sticky=W)
+    try:
+        startButton = PhotoImage(file='buttons/start_img.png')
+        Button(window, image=startButton, bg="gray18", border=0, activebackground="gray18", command=start_click).grid(row=4, column=1, sticky=N)
+    except:
+        Button(window, text="Start", width=5, command=start_click).grid(row=4, column=1, sticky=N)
+    try:
+        stopButton = PhotoImage(file='buttons/stop_img.png')
+        Button(window, image=stopButton, bg="gray18", border=0, activebackground="gray18", command=stop_click).grid(row=4,column=2,sticky=W)
+    except:
+        Button(window, text="Stop", width=5, command=stop_click).grid(row=4, column=2, sticky=W)
     Label(window, text="\n", bg="gray18").grid(row=5)
     window.mainloop()
