@@ -1,3 +1,4 @@
+import webbrowser
 from ctypes import Structure, windll, c_uint, sizeof, byref
 from cuesdk import CueSdk, CorsairLedId
 import threading
@@ -27,9 +28,15 @@ def start_click():
         start_click()
         return
     entered_minutes = float(textEntry.get()) * 60
-    timer = threading.Thread(target=main, args=(entered_minutes,))
+    R = int(red.get())
+    G = int(green.get())
+    B = int(blue.get())
+    timer = threading.Thread(target=main, args=(entered_minutes, R, G, B,))
     timer.start()
     status.set("Status: On\n")
+
+def donate():
+    webbrowser.open('https://www.paypal.com/donate?business=G5MLHBKCAHYRW&currency_code=USD', new=0, autoraise=True)
 
 
 def stop_click():
@@ -60,13 +67,13 @@ def get_available_leds():
     return leds
 
 
-def turn_on_leds(all_leds):
+def turn_on_leds(all_leds, R, G, B):
     print("turn on")
     cnt = len(all_leds)
     for di in range(cnt):
         device_leds = all_leds[di]
         for led in device_leds:
-            device_leds[led] = (255, 0, 0)
+            device_leds[led] = (R, G, B)
         sdk.set_led_colors_buffer_by_device_index(di, device_leds)
     sdk.set_led_colors_flush_buffer()
 
@@ -82,7 +89,7 @@ def turn_off_leds(all_leds):
     sdk.set_led_colors_flush_buffer()
 
 
-def main(secs):
+def main(secs, R, G, B):
     global sdk
     global flag
     global status
@@ -102,7 +109,7 @@ def main(secs):
         return
     print("keyboard lights will shutdown after: " + str(secs / 60) + " minutes")
     print("Checking idle")
-    turn_on_leds(colors)
+    turn_on_leds(colors, R, G, B)
     print("Timer Started")
     while flag:
         idle = get_idle_duration()
@@ -111,10 +118,10 @@ def main(secs):
             status.set("Status: Error\n")
         if idle > secs:
             # checking current led color to prevent keyboard spamming
-            if colors[0][CorsairLedId.K_F] == (255, 0, 0):
+            if colors[0][CorsairLedId.K_F] != (0, 0, 0):
                 turn_off_leds(colors)
         elif colors[0][CorsairLedId.K_F] == (0, 0, 0):
-            turn_on_leds(colors)
+            turn_on_leds(colors, R, G, B)
         time.sleep(0.1)
     print("Timer stopped")
     flag = True
@@ -124,24 +131,43 @@ if __name__ == "__main__":
     window = Tk()
     status = StringVar()
     status.set("Status: Off\n")
-    window.title("Corsair Led Sleep Timer")
+    window.title("Corsair Sleep Timer")
     window.configure(background="grey18")
-    Label(window, text="\nCorsair Sleep Timer\nCreated by Gil Matsliah\n\nAlso Known as gilma0\n", bg="gray18", fg="white", font="none 18 bold").grid(row=0, column=1, columnspan=2, sticky=E)
-    Label(window, text="Minutes to shut off:", bg="gray18", fg="white", font="none 12 bold").grid(row=1, column=1, sticky=W)
-    textEntry = Entry(window, width=15, bg="white")
-    textEntry.grid(row=1, column=2, sticky=W)
+    Label(window, text="\nCorsair Sleep Timer\n Created by Gil Matsliah \n\nAlso Known as gilma0\n", bg="gray18", fg="white", font="none 18 bold").grid(row=0, columnspan=8)
+    Label(window, text="          Minutes to shut off:", bg="gray18", fg="white", font="none 12 bold").grid(row=2, column=0, columnspan=4, sticky=E)
+    textEntry = Entry(window, width=7, bg="white")
+    textEntry.grid(row=2, column=4, columnspan=3, sticky=W)
     textEntry.insert(END, "5")
-    Label(window, text="", bg="gray18").grid(row=2, column=4)
-    Label(window, textvariable=status, bg="gray18", fg="white", font="none 12 bold").grid(row=3, column=1, columnspan=2)
+    Label(window, text="", bg="gray18").grid(row=3, columnspan=7)
+    Label(window, text="R:", bg="gray18", fg="white", font="none 12 bold").grid(row=4, column=0, sticky=E)
+    Label(window, text="G:", bg="gray18", fg="white", font="none 12 bold").grid(row=4, column=2, sticky=E)
+    Label(window, text="B:", bg="gray18", fg="white", font="none 12 bold").grid(row=4, column=5, sticky=E)
+    red = Entry(window, width=7)
+    red.grid(row=4, column=1, sticky=W)
+    green = Entry(window, width=7)
+    green.grid(row=4, column=3, sticky=W)
+    blue = Entry(window, width=7)
+    blue.grid(row=4, column=6, sticky=W)
+    red.insert(END, "255")
+    green.insert(END, "0")
+    blue.insert(END, "0")
+    Label(window, text="", bg="gray18").grid(row=5, columnspan=8)
+    Label(window, textvariable=status, bg="gray18", fg="white", font="none 12 bold").grid(row=6, columnspan=8)
     try:
         startButton = PhotoImage(file='buttons/start_img.png')
-        Button(window, image=startButton, bg="gray18", border=0, activebackground="gray18", command=start_click).grid(row=4, column=1, sticky=N)
+        Button(window, image=startButton, bg="gray18", border=0, activebackground="gray18", command=start_click).grid(row=7, column=0, columnspan=4)
     except:
-        Button(window, text="Start", width=5, command=start_click).grid(row=4, column=1, sticky=N)
+        Button(window, text="Start", width=5, command=start_click).grid(row=7, column=0, columnspan=4)
     try:
         stopButton = PhotoImage(file='buttons/stop_img.png')
-        Button(window, image=stopButton, bg="gray18", border=0, activebackground="gray18", command=stop_click).grid(row=4,column=2,sticky=W)
+        Button(window, image=stopButton, bg="gray18", border=0, activebackground="gray18", command=stop_click).grid(row=7, column=3, columnspan=4)
     except:
-        Button(window, text="Stop", width=5, command=stop_click).grid(row=4, column=2, sticky=W)
-    Label(window, text="\n", bg="gray18").grid(row=5)
+        Button(window, text="Stop", width=5, command=stop_click).grid(row=7, column=3, columnspan=4)
+    Label(window, text="\nIf you like my work\n please consider donating :)\n", bg="gray18", fg="white", font="none 12 bold").grid(row=8, columnspan=8)
+    try:
+        donate_img = PhotoImage(file='buttons/donate.png')
+        Button(window, image=donate_img, bg="gray18", border=0, activebackground="gray18", command=donate).grid(row=9, columnspan=8)
+    except:
+        Button(window, text="Donate!", width=7, command=donate).grid(row=9, columnspan=8)
+    Label(window, text="\n", bg="gray18").grid(row=10)
     window.mainloop()
