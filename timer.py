@@ -112,7 +112,6 @@ def main(secs, R, G, B):
     print(sdk.get_devices())
     print(str(sdk.get_devices()[0].type))
     keyboard_index = 0
-    model.set("Model: " + str(sdk.get_devices()[0]) + "\n")
     if not connected:
         err = sdk.get_last_error()
         print("Handshake failed: %s" % err)
@@ -128,6 +127,7 @@ def main(secs, R, G, B):
             break
         else:
             keyboard_index += 1
+    model.set("Model: " + str(sdk.get_devices()[keyboard_index]) + "\n")
     print("keyboard_index :" + str(keyboard_index))
     print("keyboard lights will shutdown after: " + str(secs / 60) + " minutes")
     print("Checking idle")
