@@ -16,6 +16,8 @@ class LASTINPUTINFO(Structure):
 flag = True
 timer = threading.Thread()
 status = None
+model = None
+keyboard_index = None
 
 
 def start_click():
@@ -69,44 +71,64 @@ def get_available_leds():
 
 def turn_on_leds(all_leds, R, G, B):
     print("turn on")
-    cnt = len(all_leds)
+    for led in all_leds[keyboard_index]:
+        all_leds[keyboard_index][led] = (R, G, B)
+    sdk.set_led_colors_buffer_by_device_index(keyboard_index, all_leds[keyboard_index])
+    sdk.set_led_colors_flush_buffer()
+    #old
+    """cnt = len(all_leds)
     for di in range(cnt):
         device_leds = all_leds[di]
         for led in device_leds:
             device_leds[led] = (R, G, B)
         sdk.set_led_colors_buffer_by_device_index(di, device_leds)
-    sdk.set_led_colors_flush_buffer()
+    sdk.set_led_colors_flush_buffer()"""
 
 
 def turn_off_leds(all_leds):
     print("turn off")
-    cnt = len(all_leds)
+    for led in all_leds[keyboard_index]:
+        all_leds[keyboard_index][led] = (0, 0, 0)
+    sdk.set_led_colors_buffer_by_device_index(keyboard_index, all_leds[keyboard_index])
+    sdk.set_led_colors_flush_buffer()
+    #old
+    """cnt = len(all_leds)
     for di in range(cnt):
         device_leds = all_leds[di]
         for led in device_leds:
             device_leds[led] = (0, 0, 0)
         sdk.set_led_colors_buffer_by_device_index(di, device_leds)
-    sdk.set_led_colors_flush_buffer()
+    sdk.set_led_colors_flush_buffer()"""
 
 
 def main(secs, R, G, B):
     global sdk
     global flag
     global status
+    global model
+    global keyboard_index
     sdk = CueSdk()
     connected = sdk.connect()
     print(sdk.get_devices())
+    print(str(sdk.get_devices()[0].type))
+    keyboard_index = 0
+    model.set("Model: " + str(sdk.get_devices()[0]) + "\n")
     if not connected:
         err = sdk.get_last_error()
         print("Handshake failed: %s" % err)
         status.set("Status: Error\n")
         return
-
     colors = get_available_leds()
     if not colors:
         print("Leds not available")
         status.set("Status: Error\n")
         return
+    for i in sdk.get_devices():
+        if str(i.type) == 'CorsairDeviceType.Keyboard':
+            break
+        else:
+            keyboard_index += 1
+    print("keyboard_index :" + str(keyboard_index))
     print("keyboard lights will shutdown after: " + str(secs / 60) + " minutes")
     print("Checking idle")
     turn_on_leds(colors, R, G, B)
@@ -118,9 +140,9 @@ def main(secs, R, G, B):
             status.set("Status: Error\n")
         if idle > secs:
             # checking current led color to prevent keyboard spamming
-            if colors[0][CorsairLedId.K_F] != (0, 0, 0):
+            if colors[keyboard_index][CorsairLedId.K_F] != (0, 0, 0):
                 turn_off_leds(colors)
-        elif colors[0][CorsairLedId.K_F] == (0, 0, 0):
+        elif colors[keyboard_index][CorsairLedId.K_F] == (0, 0, 0):
             turn_on_leds(colors, R, G, B)
         time.sleep(0.1)
     print("Timer stopped")
@@ -130,6 +152,8 @@ def main(secs, R, G, B):
 if __name__ == "__main__":
     window = Tk()
     status = StringVar()
+    model = StringVar()
+    model.set("Model: \n")
     status.set("Status: Off\n")
     window.title("Corsair Sleep Timer")
     window.configure(background="grey18")
@@ -152,22 +176,23 @@ if __name__ == "__main__":
     green.insert(END, "0")
     blue.insert(END, "0")
     Label(window, text="", bg="gray18").grid(row=5, columnspan=8)
-    Label(window, textvariable=status, bg="gray18", fg="white", font="none 12 bold").grid(row=6, columnspan=8)
+    Label(window, textvariable=model, bg="gray18", fg="white", font="none 12 bold").grid(row=6, columnspan=8)
+    Label(window, textvariable=status, bg="gray18", fg="white", font="none 12 bold").grid(row=7, columnspan=8)
     try:
         startButton = PhotoImage(file='buttons/start_img.png')
-        Button(window, image=startButton, bg="gray18", border=0, activebackground="gray18", command=start_click).grid(row=7, column=0, columnspan=4)
+        Button(window, image=startButton, bg="gray18", border=0, activebackground="gray18", command=start_click).grid(row=8, column=0, columnspan=4)
     except:
-        Button(window, text="Start", width=5, command=start_click).grid(row=7, column=0, columnspan=4)
+        Button(window, text="Start", width=5, command=start_click).grid(row=8, column=0, columnspan=4)
     try:
         stopButton = PhotoImage(file='buttons/stop_img.png')
-        Button(window, image=stopButton, bg="gray18", border=0, activebackground="gray18", command=stop_click).grid(row=7, column=3, columnspan=4)
+        Button(window, image=stopButton, bg="gray18", border=0, activebackground="gray18", command=stop_click).grid(row=8, column=3, columnspan=4)
     except:
-        Button(window, text="Stop", width=5, command=stop_click).grid(row=7, column=3, columnspan=4)
-    Label(window, text="\nIf you like my work\n please consider donating :)\n", bg="gray18", fg="white", font="none 12 bold").grid(row=8, columnspan=8)
+        Button(window, text="Stop", width=5, command=stop_click).grid(row=8, column=3, columnspan=4)
+    Label(window, text="\nIf you like my work\n please consider donating :)\n", bg="gray18", fg="white", font="none 12 bold").grid(row=9, columnspan=8)
     try:
         donate_img = PhotoImage(file='buttons/donate.png')
-        Button(window, image=donate_img, bg="gray18", border=0, activebackground="gray18", command=donate).grid(row=9, columnspan=8)
+        Button(window, image=donate_img, bg="gray18", border=0, activebackground="gray18", command=donate).grid(row=10, columnspan=8)
     except:
-        Button(window, text="Donate!", width=7, command=donate).grid(row=9, columnspan=8)
-    Label(window, text="\n", bg="gray18").grid(row=10)
+        Button(window, text="Donate!", width=7, command=donate).grid(row=10, columnspan=8)
+    Label(window, text="\n", bg="gray18").grid(row=11)
     window.mainloop()
