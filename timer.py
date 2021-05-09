@@ -19,6 +19,7 @@ status = None
 model = None
 keyboard_index = None
 rgb_or_profile = None
+sdk = None
 
 
 def start_click():
@@ -44,13 +45,17 @@ def donate():
 
 def stop_click():
     global flag
+    global sdk
     global timer
     global status
     if not timer.is_alive():
         print("Nothing to stop")
         return
+    sdk.request_control()
+    sdk.release_control()
     flag = False
     status.set("Status: Off\n")
+
 
 
 def get_idle_duration():
