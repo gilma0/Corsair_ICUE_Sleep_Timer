@@ -1,8 +1,11 @@
+import os
+import pickle
 import webbrowser
 from ctypes import Structure, windll, c_uint, sizeof, byref
 from cuesdk import CueSdk, CorsairLedId
 import threading
 import time
+import sys
 from tkinter import *
 
 
@@ -20,6 +23,10 @@ model = None
 keyboard_index = None
 rgb_or_profile = None
 sdk = None
+red_save = None
+green_save = None
+blue_save = None
+minutes_save = None
 
 
 def start_click():
@@ -81,14 +88,6 @@ def turn_on_leds(all_leds, R, G, B):
         all_leds[keyboard_index][led] = (R, G, B)
     sdk.set_led_colors_buffer_by_device_index(keyboard_index, all_leds[keyboard_index])
     sdk.set_led_colors_flush_buffer()
-    #old
-    """cnt = len(all_leds)
-    for di in range(cnt):
-        device_leds = all_leds[di]
-        for led in device_leds:
-            device_leds[led] = (R, G, B)
-        sdk.set_led_colors_buffer_by_device_index(di, device_leds)
-    sdk.set_led_colors_flush_buffer()"""
 
 
 def turn_off_leds(all_leds):
@@ -97,14 +96,53 @@ def turn_off_leds(all_leds):
         all_leds[keyboard_index][led] = (0, 0, 0)
     sdk.set_led_colors_buffer_by_device_index(keyboard_index, all_leds[keyboard_index])
     sdk.set_led_colors_flush_buffer()
-    #old
-    """cnt = len(all_leds)
-    for di in range(cnt):
-        device_leds = all_leds[di]
-        for led in device_leds:
-            device_leds[led] = (0, 0, 0)
-        sdk.set_led_colors_buffer_by_device_index(di, device_leds)
-    sdk.set_led_colors_flush_buffer()"""
+
+
+def save():
+    global rgb_or_profile
+    global red_save
+    global green_save
+    global blue_save
+    global minutes_save
+    config = {
+        'rgb_or_profile': rgb_or_profile.get(),
+        'red_save': red.get(),
+        'green_save': green.get(),
+        'blue_save': blue.get(),
+        'minutes_save': textEntry.get(),
+    }
+    with open("saved_settings.dat", "wb") as pickle_file:
+        pickle.dump(config, pickle_file, pickle.HIGHEST_PROTOCOL)
+
+
+def load():
+    global rgb_or_profile
+    global red_save
+    global green_save
+    global blue_save
+    global minutes_save
+    try:
+        with open("saved_settings.dat", "rb") as pickle_file:
+            config = pickle.load(pickle_file)
+        print(config)
+        rgb_or_profile.set(config.get('rgb_or_profile'))
+        red.insert(END, config.get('red_save'))
+        green.insert(END, config.get('green_save'))
+        blue.insert(END, config.get('blue_save'))
+        textEntry.insert(END,config.get('minutes_save'))
+    except IOError:
+        rgb_or_profile.set(0)
+        textEntry.insert(END, "5")
+        red.insert(END, "255")
+        green.insert(END, "0")
+        blue.insert(END, "0")
+        pass
+
+
+def stop_app():
+    save()
+    stop_click()
+    window.destroy()
 
 
 def main(secs, R, G, B):
@@ -114,6 +152,10 @@ def main(secs, R, G, B):
     global model
     global keyboard_index
     global rgb_or_profile
+    global red_save
+    global green_save
+    global blue_save
+    global minutes_save
     print(rgb_or_profile.get())
     sdk = CueSdk()
     connected = sdk.connect()
@@ -172,6 +214,10 @@ if __name__ == "__main__":
     window = Tk()
     status = StringVar()
     model = StringVar()
+    red_save = StringVar()
+    green_save = StringVar()
+    blue_save = StringVar()
+    minutes_save = StringVar()
     rgb_or_profile = IntVar()
     model.set("\nModel: \n")
     status.set("Status: Off\n")
@@ -181,7 +227,8 @@ if __name__ == "__main__":
     Label(window, text="          Minutes to shut off:", bg="gray18", fg="white", font="none 12 bold").grid(row=2, column=0, columnspan=4, sticky=E)
     textEntry = Entry(window, width=7, bg="white")
     textEntry.grid(row=2, column=4, columnspan=3, sticky=W)
-    textEntry.insert(END, "5")
+    textEntry.insert(END, minutes_save.get())
+    print(minutes_save.get())
     Label(window, text="", bg="gray18").grid(row=3, columnspan=7)
     Label(window, text="R:", bg="gray18", fg="white", font="none 12 bold").grid(row=4, column=0, sticky=E)
     Label(window, text="G:", bg="gray18", fg="white", font="none 12 bold").grid(row=4, column=2, sticky=E)
@@ -192,9 +239,9 @@ if __name__ == "__main__":
     green.grid(row=4, column=3, sticky=W)
     blue = Entry(window, width=7)
     blue.grid(row=4, column=6, sticky=W)
-    red.insert(END, "255")
-    green.insert(END, "0")
-    blue.insert(END, "0")
+    red.insert(END, red_save.get())
+    green.insert(END, green_save.get())
+    blue.insert(END, blue_save.get())
     Label(window, text="", bg="gray18").grid(row=5, columnspan=8)
     #Checkbutton(window, text="Ignore RGB values and use current profile", bg="gray18", fg="white", font="none 12 bold", variable=rgb_or_profile).grid(row=6, columnspan=8)
     Checkbutton(window, text="Ignore RGB values and use current profile", onvalue=1, offvalue=0, bg="gray18", fg="white", activebackground="gray18", activeforeground="white", selectcolor="gray18", font="none 12 bold", variable=rgb_or_profile).grid(row=6, columnspan=8)
@@ -217,4 +264,7 @@ if __name__ == "__main__":
     except:
         Button(window, text="Donate!", width=7, command=donate).grid(row=11, columnspan=8)
     Label(window, text="\n", bg="gray18").grid(row=12)
+    window.protocol("WM_DELETE_WINDOW", stop_app)
+    load()
     window.mainloop()
+    os._exit(0)
