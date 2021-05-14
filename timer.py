@@ -35,7 +35,7 @@ def start_click():
     if timer.is_alive():
         print("Timer was already running, restarting!")
         stop_click()
-        time.sleep(0.2)
+        timer.join()
         start_click()
         return
     entered_minutes = float(textEntry.get()) * 60
