@@ -2,6 +2,9 @@ import os
 import pickle
 import webbrowser
 from ctypes import Structure, windll, c_uint, sizeof, byref
+import pystray
+from pystray import MenuItem as item
+import PIL.Image
 from cuesdk import CueSdk, CorsairLedId
 import threading
 import time
@@ -18,6 +21,7 @@ class LASTINPUTINFO(Structure):
 
 flag = True
 timer = threading.Thread()
+icon_thread = threading.Thread()
 status = None
 model = None
 keyboard_index = None
@@ -27,6 +31,10 @@ red_save = None
 green_save = None
 blue_save = None
 minutes_save = None
+
+
+def minimize():
+    window.withdraw()
 
 
 def start_click():
@@ -46,8 +54,27 @@ def start_click():
     timer.start()
     status.set("Status: On\n")
 
+
 def donate():
     webbrowser.open('https://www.paypal.com/donate?business=G5MLHBKCAHYRW&currency_code=USD', new=0, autoraise=True)
+
+
+def quit_window(icon, item):
+    if icon_thread.is_alive():
+        icon.stop()
+    stop_app()
+
+
+def show_window(icon, item):
+    window.after(0, window.deiconify)
+
+
+def withdraw_window():
+    image = PIL.Image.open("icon\\python.ico")
+    menu = pystray.Menu(item('Quit', quit_window), item('Show', show_window, default=True))
+    icon = pystray.Icon("name", image, "Corsair timer", menu)
+    icon.run()
+
 
 
 def stop_click():
@@ -219,6 +246,8 @@ if __name__ == "__main__":
     blue_save = StringVar()
     minutes_save = StringVar()
     rgb_or_profile = IntVar()
+    icon_thread = threading.Thread(target=withdraw_window)
+    icon_thread.start()
     model.set("\nModel: \n")
     status.set("Status: Off\n")
     window.title("Corsair Sleep Timer")
@@ -264,7 +293,7 @@ if __name__ == "__main__":
     except:
         Button(window, text="Donate!", width=7, command=donate).grid(row=11, columnspan=8)
     Label(window, text="\n", bg="gray18").grid(row=12)
-    window.protocol("WM_DELETE_WINDOW", stop_app)
+    window.protocol("WM_DELETE_WINDOW", minimize)
     load()
     window.mainloop()
     os._exit(0)
