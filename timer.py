@@ -8,7 +8,6 @@ import PIL.Image
 from cuesdk import CueSdk, CorsairLedId
 import threading
 import time
-import sys
 from tkinter import *
 
 
@@ -31,6 +30,18 @@ red_save = None
 green_save = None
 blue_save = None
 minutes_save = None
+auto_start = None
+auto_start_thread = threading.Thread()
+
+
+def cue_check():
+    while not CueSdk().connect():
+        print("ICUE not available!")
+        time.sleep(0.1)
+    while not CueSdk().get_device_count():
+        print("leds not available")
+        time.sleep(0.1)
+    start_click()
 
 
 def minimize():
@@ -76,12 +87,11 @@ def withdraw_window():
     icon.run()
 
 
-
 def stop_click():
     global flag
-    global sdk
-    global timer
-    global status
+    # global sdk
+    # global timer
+    # global status
     if not timer.is_alive():
         print("Nothing to stop")
         return
@@ -126,28 +136,29 @@ def turn_off_leds(all_leds):
 
 
 def save():
-    global rgb_or_profile
-    global red_save
-    global green_save
-    global blue_save
-    global minutes_save
+    # global rgb_or_profile
+    # global red_save
+    # global green_save
+    # global blue_save
+    # global minutes_save
     config = {
         'rgb_or_profile': rgb_or_profile.get(),
         'red_save': red.get(),
         'green_save': green.get(),
         'blue_save': blue.get(),
         'minutes_save': textEntry.get(),
+        'auto_start' : auto_start.get(),
     }
     with open("saved_settings.dat", "wb") as pickle_file:
         pickle.dump(config, pickle_file, pickle.HIGHEST_PROTOCOL)
 
 
 def load():
-    global rgb_or_profile
-    global red_save
-    global green_save
-    global blue_save
-    global minutes_save
+    # global rgb_or_profile
+    # global red_save
+    # global green_save
+    # global blue_save
+    # global minutes_save
     try:
         with open("saved_settings.dat", "rb") as pickle_file:
             config = pickle.load(pickle_file)
@@ -157,13 +168,18 @@ def load():
         green.insert(END, config.get('green_save'))
         blue.insert(END, config.get('blue_save'))
         textEntry.insert(END,config.get('minutes_save'))
+        auto_start.set(config.get('auto_start'))
     except IOError:
         rgb_or_profile.set(0)
         textEntry.insert(END, "5")
         red.insert(END, "255")
         green.insert(END, "0")
         blue.insert(END, "0")
+        auto_start.set(0)
         pass
+    if auto_start.get() == 1:
+        auto_start_thread = threading.Thread(target=cue_check)
+        auto_start_thread.start()
 
 
 def stop_app():
@@ -175,14 +191,14 @@ def stop_app():
 def main(secs, R, G, B):
     global sdk
     global flag
-    global status
-    global model
+    # global status
+    # global model
     global keyboard_index
-    global rgb_or_profile
-    global red_save
-    global green_save
-    global blue_save
-    global minutes_save
+    # global rgb_or_profile
+    # global red_save
+    # global green_save
+    # global blue_save
+    # global minutes_save
     print(rgb_or_profile.get())
     sdk = CueSdk()
     connected = sdk.connect()
@@ -246,6 +262,7 @@ if __name__ == "__main__":
     blue_save = StringVar()
     minutes_save = StringVar()
     rgb_or_profile = IntVar()
+    auto_start = IntVar()
     icon_thread = threading.Thread(target=withdraw_window)
     icon_thread.start()
     model.set("\nModel: \n")
@@ -292,7 +309,11 @@ if __name__ == "__main__":
         Button(window, image=donate_img, bg="gray18", border=0, activebackground="gray18", command=donate).grid(row=11, columnspan=8)
     except:
         Button(window, text="Donate!", width=7, command=donate).grid(row=11, columnspan=8)
-    Label(window, text="\n", bg="gray18").grid(row=12)
+    Label(window, text="", bg="gray18").grid(row=12, columnspan=8)
+    Checkbutton(window, text="Start at launch", onvalue=1, offvalue=0, bg="gray18",
+                fg="white", activebackground="gray18", activeforeground="white", selectcolor="gray18",
+                font="none 12 bold", variable=auto_start).grid(row=13, columnspan=8)
+    Label(window, text="", bg="gray18").grid(row=14)
     window.protocol("WM_DELETE_WINDOW", minimize)
     load()
     window.mainloop()
