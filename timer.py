@@ -320,7 +320,7 @@ if __name__ == "__main__":
     Checkbutton(window, text="Start at launch", onvalue=1, offvalue=0, bg="gray18",
                 fg="white", activebackground="gray18", activeforeground="white", selectcolor="gray18",
                 font="none 12 bold", variable=auto_start).grid(row=13, columnspan=8, sticky=W)
-    Checkbutton(window, text="Start minimized", onvalue=1, offvalue=0, bg="gray18",
+    Checkbutton(window, text="Launch minimized", onvalue=1, offvalue=0, bg="gray18",
                 fg="white", activebackground="gray18", activeforeground="white", selectcolor="gray18",
                 font="none 12 bold", variable=auto_minimize).grid(row=13, columnspan=8, sticky=E)
     Label(window, text="", bg="gray18").grid(row=14)
