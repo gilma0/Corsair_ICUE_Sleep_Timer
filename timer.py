@@ -31,6 +31,7 @@ green_save = None
 blue_save = None
 minutes_save = None
 auto_start = None
+auto_minimize = None
 auto_start_thread = threading.Thread()
 
 
@@ -148,6 +149,7 @@ def save():
         'blue_save': blue.get(),
         'minutes_save': textEntry.get(),
         'auto_start' : auto_start.get(),
+        'auto_minimize' : auto_minimize.get(),
     }
     with open("saved_settings.dat", "wb") as pickle_file:
         pickle.dump(config, pickle_file, pickle.HIGHEST_PROTOCOL)
@@ -169,6 +171,7 @@ def load():
         blue.insert(END, config.get('blue_save'))
         textEntry.insert(END,config.get('minutes_save'))
         auto_start.set(config.get('auto_start'))
+        auto_minimize.set(config.get('auto_minimize'))
     except IOError:
         rgb_or_profile.set(0)
         textEntry.insert(END, "5")
@@ -176,10 +179,13 @@ def load():
         green.insert(END, "0")
         blue.insert(END, "0")
         auto_start.set(0)
+        auto_minimize.set(0)
         pass
     if auto_start.get() == 1:
         auto_start_thread = threading.Thread(target=cue_check)
         auto_start_thread.start()
+    if auto_minimize.get() == 1:
+        minimize()
 
 
 def stop_app():
@@ -263,6 +269,7 @@ if __name__ == "__main__":
     minutes_save = StringVar()
     rgb_or_profile = IntVar()
     auto_start = IntVar()
+    auto_minimize = IntVar()
     icon_thread = threading.Thread(target=withdraw_window)
     icon_thread.start()
     model.set("\nModel: \n")
@@ -312,7 +319,10 @@ if __name__ == "__main__":
     Label(window, text="", bg="gray18").grid(row=12, columnspan=8)
     Checkbutton(window, text="Start at launch", onvalue=1, offvalue=0, bg="gray18",
                 fg="white", activebackground="gray18", activeforeground="white", selectcolor="gray18",
-                font="none 12 bold", variable=auto_start).grid(row=13, columnspan=8)
+                font="none 12 bold", variable=auto_start).grid(row=13, columnspan=8, sticky=W)
+    Checkbutton(window, text="Start minimized", onvalue=1, offvalue=0, bg="gray18",
+                fg="white", activebackground="gray18", activeforeground="white", selectcolor="gray18",
+                font="none 12 bold", variable=auto_minimize).grid(row=13, columnspan=8, sticky=E)
     Label(window, text="", bg="gray18").grid(row=14)
     window.protocol("WM_DELETE_WINDOW", minimize)
     load()
