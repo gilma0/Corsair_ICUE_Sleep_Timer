@@ -65,6 +65,7 @@ def start_click():
     timer = threading.Thread(target=main, args=(entered_minutes, R, G, B,))
     timer.start()
     status.set("Status: On\n")
+    save()
 
 
 def donate():
@@ -189,7 +190,7 @@ def load():
 
 
 def stop_app():
-    save()
+    #save()
     stop_click()
     window.destroy()
 
