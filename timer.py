@@ -19,6 +19,7 @@ class LASTINPUTINFO(Structure):
 
 
 flag = True
+control_flag = True
 timer = threading.Thread()
 icon_thread = threading.Thread()
 status = None
@@ -198,6 +199,7 @@ def stop_app():
 def main(secs, R, G, B):
     global sdk
     global flag
+    global control_flag
     # global status
     # global model
     global keyboard_index
@@ -252,9 +254,15 @@ def main(secs, R, G, B):
                 flag = True
                 status.set("Status: Error\n")
             if idle > secs:
-                sdk.request_control()
+                if control_flag:
+                    print("request")
+                    control_flag = sdk.request_control()
+                    print(control_flag)
             else:
-                sdk.release_control()
+                if not control_flag:
+                    print("release")
+                    control_flag = sdk.release_control()
+                    print(control_flag)
         time.sleep(0.1)
     print("Timer stopped")
     flag = True
