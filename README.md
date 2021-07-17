@@ -13,4 +13,5 @@ Tested on RGB and non-RGB Corsair K70 keyboards, should work on most of Corsair 
 
 * New versions of ICUE require to enable software integrations in the settings
 
+
 ![alt text](https://i.imgur.com/J054SfB.png)
