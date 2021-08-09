@@ -8,6 +8,7 @@ import PIL.Image
 from cuesdk import CueSdk, CorsairLedId
 import threading
 import time
+import datetime
 from tkinter import *
 
 
@@ -22,6 +23,7 @@ flag = True
 control_flag = True
 timer = threading.Thread()
 icon_thread = threading.Thread()
+sleep_thread = threading.Thread()
 status = None
 model = None
 keyboard_index = None
@@ -67,6 +69,19 @@ def start_click():
     timer.start()
     status.set("Status: On\n")
     save()
+
+
+def sleep_timer():
+    curtime = datetime.datetime.now()
+    while True:
+        time.sleep(1)
+        diff = (datetime.datetime.now() - curtime).total_seconds()
+        print(diff)
+        if diff > 10:
+            print("....... I'm Awake .......")
+            os.execl(sys.executable, sys.executable, *sys.argv)
+        curtime = datetime.datetime.now()
+
 
 
 def donate():
@@ -280,6 +295,8 @@ if __name__ == "__main__":
     auto_start = IntVar()
     auto_minimize = IntVar()
     icon_thread = threading.Thread(target=withdraw_window)
+    sleep_thread = threading.Thread(target=sleep_timer)
+    sleep_thread.start()
     icon_thread.start()
     model.set("\nModel: \n")
     status.set("Status: Off\n")
