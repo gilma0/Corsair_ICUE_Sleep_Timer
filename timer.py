@@ -13,13 +13,17 @@ from tkinter import *
 
 
 class LASTINPUTINFO(Structure):
+    """
+    Detects input from system
+    # took from the web
+    """
     _fields_ = [
         ('cbSize', c_uint),
         ('dwTime', c_uint),
     ]
 
 
-flag = True
+activity_flag = True
 control_flag = True
 timer = threading.Thread()
 icon_thread = threading.Thread()
@@ -27,7 +31,7 @@ sleep_thread = threading.Thread()
 status = None
 model = None
 keyboard_index = None
-rgb_or_profile = None
+use_icue_settings = None
 sdk = None
 red_save = None
 green_save = None
@@ -39,6 +43,9 @@ auto_start_thread = threading.Thread()
 
 
 def cue_check():
+    """
+    In case of auto start checks ICUE and keyboard availability
+    """
     while not CueSdk().connect():
         print("ICUE not available!")
         time.sleep(0.1)
@@ -53,6 +60,9 @@ def minimize():
 
 
 def start_click():
+    """
+    Once the start button is pressed (or auto start) -> starts a timer thread
+    """
     global timer
     global status
     if timer.is_alive():
@@ -72,6 +82,9 @@ def start_click():
 
 
 def sleep_timer():
+    """
+    In case PC sleep is detected restarts the program from scratch.
+    """
     curtime = datetime.datetime.now()
     while True:
         time.sleep(1)
@@ -80,6 +93,8 @@ def sleep_timer():
         if diff > 10:
             print("....... I'm Awake .......")
             os.execl(sys.executable, sys.executable, *sys.argv)
+            while(True):
+                print("blabla")
         curtime = datetime.datetime.now()
 
 
@@ -89,16 +104,27 @@ def donate():
 
 
 def quit_window(icon, item):
+    """
+    Input: icon thread, item clicked
+    Stops the program.
+    """
     if icon_thread.is_alive():
         icon.stop()
     stop_app()
 
 
 def show_window(icon, item):
+    """
+    Input: icon thread, item clicked
+    Restores the program Gui window.
+    """
     window.after(0, window.deiconify)
 
 
 def withdraw_window():
+    """
+    Minimize the program to an icon
+    """
     image = PIL.Image.open("icon\\python.ico")
     menu = pystray.Menu(item('Quit', quit_window), item('Show', show_window, default=True))
     icon = pystray.Icon("name", image, "Corsair timer", menu)
@@ -106,21 +132,26 @@ def withdraw_window():
 
 
 def stop_click():
-    global flag
-    # global sdk
-    # global timer
-    # global status
+    """
+    Changing activity_flag to False so the timer thread will stop
+    """
+    global activity_flag
     if not timer.is_alive():
         print("Nothing to stop")
         return
     sdk.request_control()
     sdk.release_control()
-    flag = False
+    activity_flag = False
     status.set("Status: Off\n")
 
 
 
 def get_idle_duration():
+    """
+    Output: idle time
+    Taken from the web
+    Uses the class LASTINPUTINFO to get the current idle time
+    """
     lastInputInfo = LASTINPUTINFO()
     lastInputInfo.cbSize = sizeof(lastInputInfo)
     windll.user32.GetLastInputInfo(byref(lastInputInfo))
@@ -129,6 +160,10 @@ def get_idle_duration():
 
 
 def get_available_leds():
+    """
+    Output: list of leds available to control
+    Taken from a code sample of Cuesdk
+    """
     leds = list()
     device_count = sdk.get_device_count()
     for device_index in range(device_count):
@@ -138,6 +173,10 @@ def get_available_leds():
 
 
 def turn_on_leds(all_leds, R, G, B):
+    """
+    Input: list of leds and RGB values to apply
+    Partly taken from a code sample of Cuesdk, added my values.
+    """
     print("turn on")
     for led in all_leds[keyboard_index]:
         all_leds[keyboard_index][led] = (R, G, B)
@@ -146,6 +185,10 @@ def turn_on_leds(all_leds, R, G, B):
 
 
 def turn_off_leds(all_leds):
+    """
+    Input: list of leds
+    Applies zero RGB values to all the leds available so the keyboard lights will shut off
+    """
     print("turn off")
     for led in all_leds[keyboard_index]:
         all_leds[keyboard_index][led] = (0, 0, 0)
@@ -154,13 +197,11 @@ def turn_off_leds(all_leds):
 
 
 def save():
-    # global rgb_or_profile
-    # global red_save
-    # global green_save
-    # global blue_save
-    # global minutes_save
+    """
+    Saving last user applied values using pickle
+    """
     config = {
-        'rgb_or_profile': rgb_or_profile.get(),
+        'use_icue_settings': use_icue_settings.get(),
         'red_save': red.get(),
         'green_save': green.get(),
         'blue_save': blue.get(),
@@ -173,16 +214,15 @@ def save():
 
 
 def load():
-    # global rgb_or_profile
-    # global red_save
-    # global green_save
-    # global blue_save
-    # global minutes_save
+    """
+    Loading last user applied values from file created by pickle
+    In case none has been found applies default values
+    """
     try:
         with open("saved_settings.dat", "rb") as pickle_file:
             config = pickle.load(pickle_file)
         print(config)
-        rgb_or_profile.set(config.get('rgb_or_profile'))
+        use_icue_settings.set(config.get('use_icue_settings'))
         red.insert(END, config.get('red_save'))
         green.insert(END, config.get('green_save'))
         blue.insert(END, config.get('blue_save'))
@@ -190,7 +230,7 @@ def load():
         auto_start.set(config.get('auto_start'))
         auto_minimize.set(config.get('auto_minimize'))
     except IOError:
-        rgb_or_profile.set(0)
+        use_icue_settings.set(0)
         textEntry.insert(END, "5")
         red.insert(END, "255")
         green.insert(END, "0")
@@ -199,6 +239,9 @@ def load():
         auto_minimize.set(0)
         pass
     if auto_start.get() == 1:
+        """
+        In the case of start at launch
+        """
         auto_start_thread = threading.Thread(target=cue_check)
         auto_start_thread.start()
     if auto_minimize.get() == 1:
@@ -206,28 +249,28 @@ def load():
 
 
 def stop_app():
-    #save()
     stop_click()
     window.destroy()
 
 
 def main(secs, R, G, B):
+    """
+    Input: time to shut leds off and RGB values
+    After checking everything is ready to run (mainly ICUE and keyboard) and some GUI updating (keyboard model and such)
+    Runs one of the following:
+        use_icue_settings.get() == 0:
+            apply user set RGB values to the keyboard until set idle time reached
+        use_icue_settings.get() == 1:
+            apply user set ICUE profile to the keyboard until set idle time reached
+    """
     global sdk
-    global flag
+    global activity_flag
     global control_flag
-    # global status
-    # global model
     global keyboard_index
-    # global rgb_or_profile
-    # global red_save
-    # global green_save
-    # global blue_save
-    # global minutes_save
-    print(rgb_or_profile.get())
+    print(use_icue_settings.get())
     sdk = CueSdk()
     connected = sdk.connect()
     print(sdk.get_devices())
-
     keyboard_index = 0
     if not connected:
         err = sdk.get_last_error()
@@ -249,14 +292,14 @@ def main(secs, R, G, B):
     print("keyboard_index :" + str(keyboard_index))
     print("keyboard lights will shutdown after: " + str(secs / 60) + " minutes")
     print("Checking idle")
-    if rgb_or_profile.get() == 0:
+    if use_icue_settings.get() == 0:
         turn_on_leds(colors, R, G, B)
     print("Timer Started")
-    while flag:
+    while activity_flag:
         idle = get_idle_duration()
-        if rgb_or_profile.get() == 0:
+        if use_icue_settings.get() == 0:
             if sdk.get_device_count() == -1:
-                flag = True
+                activity_flag = True
                 status.set("Status: Error\n")
             if idle > secs:
                 # checking current led color to prevent keyboard spamming
@@ -264,9 +307,9 @@ def main(secs, R, G, B):
                     turn_off_leds(colors)
             elif colors[keyboard_index][CorsairLedId.K_F] == (0, 0, 0):
                 turn_on_leds(colors, R, G, B)
-        elif rgb_or_profile.get() == 1:
+        elif use_icue_settings.get() == 1:
             if sdk.get_device_count() == -1:
-                flag = True
+                activity_flag = True
                 status.set("Status: Error\n")
             if idle > secs:
                 if control_flag:
@@ -280,10 +323,13 @@ def main(secs, R, G, B):
                     print(control_flag)
         time.sleep(0.1)
     print("Timer stopped")
-    flag = True
+    activity_flag = True
 
 
 if __name__ == "__main__":
+    """
+    GUI stuff and last user save loading
+    """
     window = Tk()
     status = StringVar()
     model = StringVar()
@@ -291,7 +337,7 @@ if __name__ == "__main__":
     green_save = StringVar()
     blue_save = StringVar()
     minutes_save = StringVar()
-    rgb_or_profile = IntVar()
+    use_icue_settings = IntVar()
     auto_start = IntVar()
     auto_minimize = IntVar()
     icon_thread = threading.Thread(target=withdraw_window)
@@ -322,8 +368,7 @@ if __name__ == "__main__":
     green.insert(END, green_save.get())
     blue.insert(END, blue_save.get())
     Label(window, text="", bg="gray18").grid(row=5, columnspan=8)
-    #Checkbutton(window, text="Ignore RGB values and use current profile", bg="gray18", fg="white", font="none 12 bold", variable=rgb_or_profile).grid(row=6, columnspan=8)
-    Checkbutton(window, text="Ignore RGB values and use current profile", onvalue=1, offvalue=0, bg="gray18", fg="white", activebackground="gray18", activeforeground="white", selectcolor="gray18", font="none 12 bold", variable=rgb_or_profile).grid(row=6, columnspan=8)
+    Checkbutton(window, text="Ignore RGB values and use current profile", onvalue=1, offvalue=0, bg="gray18", fg="white", activebackground="gray18", activeforeground="white", selectcolor="gray18", font="none 12 bold", variable=use_icue_settings).grid(row=6, columnspan=8)
     Label(window, textvariable=model, bg="gray18", fg="white", font="none 12 bold").grid(row=7, columnspan=8)
     Label(window, textvariable=status, bg="gray18", fg="white", font="none 12 bold").grid(row=8, columnspan=8)
     try:
